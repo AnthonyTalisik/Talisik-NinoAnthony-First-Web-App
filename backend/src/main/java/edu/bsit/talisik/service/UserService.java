@@ -15,6 +15,7 @@ import edu.bsit.talisik.dto.DashboardResponse;
 import edu.bsit.talisik.dto.LoginRequest;
 import edu.bsit.talisik.dto.LoginResponse;
 import edu.bsit.talisik.dto.RegisterRequest;
+import edu.bsit.talisik.dto.UpdateProfileRequest;
 import edu.bsit.talisik.dto.UserResponse;
 import edu.bsit.talisik.exception.AuthException;
 import edu.bsit.talisik.exception.ForbiddenException;
@@ -30,17 +31,33 @@ public class UserService {
     public UserService(UserRepository repo) { this.repo = repo; }
 
     public UserResponse register(RegisterRequest req) {
-        if (repo.existsByEmail(req.email()))
+        String email = normalize(req.email());
+        if (repo.existsByEmail(email))
             throw new IllegalArgumentException("Email already used");
         User u = new User();
-        u.setFullName(req.fullName());
-        u.setEmail(req.email());
+        u.setFullName(req.fullName().trim());
+        u.setEmail(email);
         u.setPassword(hash(req.password()));
         return toResponse(repo.save(u));
     }
 
+    /** Feature: seed an ADMIN user (called by DataSeeder at startup). */
+    public void seedAdmin(String fullName, String email, String password) {
+        String normalized = normalize(email);
+        if (repo.existsByEmail(normalized)) return;
+        User u = new User();
+        u.setFullName(fullName);
+        u.setEmail(normalized);
+        u.setPassword(hash(password));
+        u.setRole("ADMIN");
+        repo.save(u);
+    }
+
     public LoginResponse login(LoginRequest req) {
-        User u = repo.findByEmail(req.email())
+        if (req.email() == null || req.password() == null
+                || req.email().isBlank() || req.password().isBlank())
+            throw new AuthException("Invalid credentials");
+        User u = repo.findByEmail(normalize(req.email()))
                 .orElseThrow(() -> new AuthException("Invalid credentials"));
         if (!u.getPassword().equals(hash(req.password())))
             throw new AuthException("Invalid credentials");
@@ -49,9 +66,16 @@ public class UserService {
         return new LoginResponse(token, toResponse(u));
     }
 
+    /** Feature: server-side logout. Removes the token from the session map. */
+    public void logout(String header) {
+        if (header == null) throw new AuthException("Please log in");
+        if (sessions.remove(extractToken(header)) == null)
+            throw new AuthException("Session expired");
+    }
+
     public User authenticate(String header) {
         if (header == null) throw new AuthException("Please log in");
-        Long id = sessions.get(header.replace("Bearer ", ""));
+        Long id = sessions.get(extractToken(header));
         if (id == null) throw new AuthException("Session expired");
         return repo.findById(id).orElseThrow(() -> new AuthException("Session expired"));
     }
@@ -61,6 +85,14 @@ public class UserService {
                 u.getRole(), u.getCreatedAt(), repo.count());
     }
 
+    /** Feature: edit my profile (full name only). */
+    public UserResponse updateProfile(User u, UpdateProfileRequest req) {
+        u.setFullName(req.fullName().trim());
+        return toResponse(repo.save(u));
+    }
+
+    public UserResponse me(User u) { return toResponse(u); }
+
     public void requireRole(User u, String role) {
         if (!role.equals(u.getRole()))
             throw new ForbiddenException("Access denied");
@@ -68,6 +100,14 @@ public class UserService {
 
     public List<UserResponse> findAll() {
         return repo.findAll().stream().map(this::toResponse).toList();
+    }
+
+    private String extractToken(String header) {
+        return header.replace("Bearer ", "").trim();
+    }
+
+    private String normalize(String email) {
+        return email == null ? "" : email.trim().toLowerCase();
     }
 
     private String hash(String raw) {

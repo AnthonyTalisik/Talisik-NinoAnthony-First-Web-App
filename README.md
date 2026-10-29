@@ -70,8 +70,8 @@ H2 console login: JDBC URL `jdbc:h2:mem:userhubdb`, user `sa`, empty password.
 
 An ADMIN user is created automatically at startup:
 
-- Email: `<admin email>`
-- Password: `<admin password>`
+- Email: `admin@userhub.edu`
+- Password: `Admin12345`
 
 ## How to Test
 

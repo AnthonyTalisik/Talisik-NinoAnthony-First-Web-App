@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/client";
 
@@ -7,29 +7,43 @@ export default function Register() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const onChange = (event) =>
-    setForm({ ...form, [event.target.name]: event.target.value });
+  const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const onSubmit = async (event) => {
-    event.preventDefault();
+  const onSubmit = async (e) => {
+    e.preventDefault();
     setError("");
     try {
       await api.post("/auth/register", form);
       navigate("/login");
-    } catch {
-      setError("Registration failed. Check your details or try another email.");
+    } catch (err) {
+      setError(err.response?.data?.error ?? "Cannot reach the server");
     }
   };
 
   return (
-    <form onSubmit={onSubmit} className="card">
-      <h2>Create account</h2>
-      <input name="fullName" placeholder="Full name" value={form.fullName} onChange={onChange} required />
-      <input name="email" type="email" placeholder="Email" value={form.email} onChange={onChange} required />
-      <input name="password" type="password" placeholder="Password (at least 8 characters)" value={form.password} onChange={onChange} minLength={8} required />
-      {error && <p className="error">{error}</p>}
-      <button type="submit">Register</button>
-      <p>Already have an account? <Link to="/login">Log in</Link></p>
-    </form>
+    <div className="auth-page">
+      <section className="auth-brand">
+        <span className="logo big">User<b>Hub</b></span>
+        <h1>Create your account</h1>
+        <p>Join UserHub to manage your profile and access your personal dashboard.</p>
+      </section>
+      <section className="auth-panel">
+        <form onSubmit={onSubmit} className="auth-form">
+          <h2>Sign up</h2>
+          <label>Full name
+            <input name="fullName" placeholder="Fullname" value={form.fullName} onChange={onChange} required />
+          </label>
+          <label>Email
+            <input name="email" type="email" placeholder="Email" value={form.email} onChange={onChange} required />
+          </label>
+          <label>Password
+            <input name="password" type="password" placeholder="At least 8 characters" minLength={8} value={form.password} onChange={onChange} required />
+          </label>
+          {error && <p className="alert alert-error">{error}</p>}
+          <button className="btn btn-primary" type="submit">Register</button>
+          <p className="muted center">Already have an account? <Link to="/login">Log in</Link></p>
+        </form>
+      </section>
+    </div>
   );
 }

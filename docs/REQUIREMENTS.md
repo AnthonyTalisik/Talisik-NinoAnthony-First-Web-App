@@ -60,22 +60,22 @@
 - **Description:** A default admin account is created on startup using CommandLineRunner.
 - **Expected behavior:** Admin can log in after every restart (the database is in-memory).
 - **Endpoint:** `POST /api/auth/login` with the admin credentials
-- **Status:** Pending
+- **Status:** Implemented
 
 ## 9. Admin Users Page (15 pts)
 - **Description:** ADMIN-only page listing all registered users.
 - **Expected behavior:** Admin sees a table of id, name, email and role. Non-admins get 403 from the API and are redirected by the frontend.
 - **Endpoint:** `GET /api/dashboard/users`
-- **Status:** Pending
+- **Status:** Implemented
 
 ## 10. Server-Side Logout (10 pts)
 - **Description:** Logout invalidates the token on the server.
 - **Expected behavior:** The token is removed from the session map; reusing it returns 401.
 - **Endpoint:** `POST /api/auth/logout`
-- **Status:** Pending
+- **Status:** Implemented
 
 ## 11. Edit My Profile (15 pts)
 - **Description:** Authenticated users can update their full name.
 - **Expected behavior:** The name is saved, validated (not blank) and shown on the dashboard.
 - **Endpoint:** `PUT /api/users/me`
-- **Status:** Pending
+- **Status:** Implemented
